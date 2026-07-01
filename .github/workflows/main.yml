@@ -1,0 +1,32 @@
+name: Telegram Bot
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install pyTelegramBotAPI aiohttp opencv-python-headless ddddocr numpy
+      - name: Run Bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          sed -i "s/os.getenv(\"Bot-Token ထည့်\")/os.getenv(\"BOT_TOKEN\")/g" bot.py
+          sed -i "s/os.getenv(\"Admin IDထည့်\")/os.getenv(\"ADMIN_ID\")/g" bot.py
+          sed -i "s/os.getenv(\"Github-Tikenထည့်\")/os.getenv(\"GH_TOKEN\")/g" bot.py
+          sed -i "s/os.getenv(\"Repo owner ထည့်\")/\"ShineLiveTV\"/g" bot.py
+          sed -i "s/os.getenv(\"Repo nameထည့်\")/\"telegram-bot-deploy\"/g" bot.py
+          python bot.py
+
