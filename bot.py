@@ -1,4 +1,4 @@
-Import telebot, asyncio, aiohttp, json, base64, random, re, os, string, time, uuid
+import telebot, asyncio, aiohttp, json, base64, random, re, os, string, time, uuid
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiohttp import web
@@ -750,75 +750,35 @@ async def load_saved_results():
     except Exception as e:
         print(f"[startup] Could not load result.json: {e}")
 
-# ── Menu Inline Keyboard ───────────────────────────────────────────────────
-def get_main_menu():
-    markup = InlineKeyboardMarkup(row_width=2)
-    btn_key = InlineKeyboardButton("🔑 My Key Status", callback_data="menu_key")
-    btn_setup = InlineKeyboardButton("⚙️ Setup URL", callback_data="menu_setup")
-    btn_brute = InlineKeyboardButton("🚀 Start Scan", callback_data="menu_brute")
-    btn_stop = InlineKeyboardButton("🛑 Stop", callback_data="menu_stop")
-    btn_resume = InlineKeyboardButton("▶️ Resume", callback_data="menu_resume")
-    btn_saved = InlineKeyboardButton("📂 Saved Codes", callback_data="menu_saved")
-    btn_notify = InlineKeyboardButton("🔔 Notify Toggle", callback_data="menu_notify")
-    btn_recheck = InlineKeyboardButton("🔄 Recheck", callback_data="menu_recheck")
-    btn_status = InlineKeyboardButton("📊 Status (Admin)", callback_data="menu_status")
-    
-    markup.add(btn_key, btn_setup)
-    markup.add(btn_brute, btn_stop, btn_resume)
-    markup.add(btn_saved, btn_recheck)
-    markup.add(btn_notify, btn_status)
-    return markup
-
 # ── Bot commands ───────────────────────────────────────────────────────────
-@bot.message_handler(commands=['start', 'help'])
-async def send_welcome(message):
-    welcome_text = (
-        "🌟 **Welcome to Premium Brute Bot** 🌟\n\n"
-        "အောက်ပါ Menu များမှတဆင့် အလွယ်တကူ အသုံးပြုနိုင်ပါသည်။\n"
-        "Command များကို ကိုယ်တိုင်ရိုက်ထည့်လိုပါကလည်း ရနိုင်ပါသည်။"
-    )
-    await bot.reply_to(message, welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
+@bot.message_handler(commands=['start'])
+async def start(message):
+    await bot.reply_to(message, "Bot စတင်ပါပြီ။ /help ဖြင့် အသုံးပြုနည်းကြည့်ပါ။")
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("menu_"))
-async def handle_main_menu(call):
-    await bot.answer_callback_query(call.id)
-    action = call.data.split("_")[1]
-    
-    # Simulate a message object for the command handlers
-    msg = call.message
-    msg.chat.id = call.message.chat.id 
-    
-    if action == "key":
-        await handle_key(msg)
-    elif action == "setup":
-        setup_guide = (
-            "⚙️ **Setup ပြုလုပ်ရန်:**\n\n"
-            "`/setup <your_session_url>` \n\n"
-            "ဟု Chat တွင် ရိုက်ထည့်ပါ။ (Session URL အသစ်ထည့်လျှင် Code အဟောင်းများ ဖျက်ပါမည်)"
-        )
-        await bot.send_message(msg.chat.id, setup_guide, parse_mode="Markdown")
-    elif action == "brute":
-        brute_guide = (
-            "🚀 **Scan စတင်ရန်:**\n\n"
-            "`/brute <mode> [target] [plan]` ဟု ရိုက်ထည့်ပါ။\n\n"
-            "💡 **ဥပမာများ:**\n"
-            "• `/brute 6 10 1d` (၁ရက် code ၁၀ ခု)\n"
-            "• `/brute 6 1d unlimit` (၁ရက် သို့မဟုတ် unlimit code)\n"
-            "• `/brute 6` (အကုန်ရှာရန်)"
-        )
-        await bot.send_message(msg.chat.id, brute_guide, parse_mode="Markdown")
-    elif action == "stop":
-        await stop_scan(msg)
-    elif action == "resume":
-        await resume_scan(msg)
-    elif action == "saved":
-        await saved_codes(msg)
-    elif action == "notify":
-        await toggle_notify(msg)
-    elif action == "recheck":
-        await recheck(msg)
-    elif action == "status":
-        await status(msg)
+@bot.message_handler(commands=['help'])
+async def help_cmd(message):
+    help_text = (
+        "📚 **Command လမ်းညွှန်**\n\n"
+        "/key - သင်၏ key ကို အတည်ပြုရန်\n"
+        "/setup [session_url] - Session URL သတ်မှတ်ရန် (code အဟောင်းများ ဖျက်ပါမည်)\n"
+        "/brute <mode> [target] [plan] - Code စတင်ရှာဖွေရန်\n"
+        "   /brute 6 10 1d        → ၁ရက် code ၁၀ ခုရှာ\n"
+        "   /brute 6 1d unlimit  → ၁ရက်(သို့) unlimit code ရှာ\n"
+        "   /brute 6 10 1d 1mo   → ၁ရက် (သို့) ၁လ code ၁၀ ခုရှာ\n"
+        "   /brute 6             → အစုံရှာ\n"
+        "   plan: ကိုယ်ကြိုက်သလောက် (30min, 2h, 1d, 1mo, unlimit ...)\n"
+        "/stop - ရှာဖွေနေသည့် လုပ်ငန်းစဉ်အားရပ်ရန်\n"
+        "/resume - ရပ်ထားသည့် scan ကို ပြန်စရန်\n"
+        "/saved - လက်ရှိ session success/limited codes ကြည့်ရန်\n"
+        "/notify - code တွေ့တိုင်း အကြောင်းကြားချက်ကို On/Off ပြုလုပ်ရန်\n"
+        "/recheck - သိမ်းထားသော success codes များကို ပြန်လည်စစ်ဆေးရန်\n"
+        "/status - (Admin) Bot အခြေအနေကြည့်ရန်\n"
+        "/genkey <duration> <user_id> - (Admin) Key ထုတ်ပေးရန်\n"
+        "   duration: 30m, 1h, 2d, 1h30m, unlimited\n"
+        "/delkey <user_id> - (Admin) Key ဖျက်ရန်\n"
+        "/listkeys - (Admin) Key များကြည့်ရန်"
+    )
+    await bot.reply_to(message, help_text, parse_mode="Markdown")
 
 @bot.message_handler(commands=['key'])
 async def handle_key(message):
@@ -829,25 +789,25 @@ async def handle_key(message):
             approve[message.chat.id] = True
             user_data.setdefault(message.chat.id, {})
             save_state()
-            await bot.reply_to(message, "✅ Key မှန်ကန်ပါသည်။ Menu မှတဆင့် Setup ပြုလုပ်ပါ။")
+            await bot.reply_to(message, "✅ Key မှန်ကန်ပါသည်။ /setup ဖြင့် Session URL ထည့်ပါ။")
         else:
             approve[message.chat.id] = False
             save_state()
             await bot.reply_to(message, "❌ Key Expired ဖြစ်နေပါသည်။")
     else:
-        await bot.reply_to(message, "🔒 သင်၏ key ကို registered မလုပ်ရသေးပါ။")
+        await bot.reply_to(message, "သင်၏ key ကို registered မလုပ်ရသေးပါ။")
 
 @bot.message_handler(commands=['setup'])
 async def handle_setup(message):
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        await bot.reply_to(message, "အသုံးပြုနည်း:\n`/setup your_session_url`", parse_mode="Markdown")
+        await bot.reply_to(message, "အသုံးပြုနည်း:\n/setup your_session_url")
         return
     url = args[1]
     if not approve.get(message.chat.id, False):
-        await bot.reply_to(message, "Key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
+        await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
-    await bot.reply_to(message, "🔄 Session URL စစ်ဆေးနေပါသည်...")
+    await bot.reply_to(message, "Session URL စစ်ဆေးနေပါသည်...")
     if await check_session_url(url):
         cid = message.chat.id
 
@@ -880,23 +840,23 @@ async def handle_setup(message):
             print(f"[setup] Failed to clear GitHub result.json: {e}")
 
         save_state()
-        await bot.reply_to(message, "✅ Session URL သိမ်းဆည်းပြီးပါပြီ။ Scan စတင်နိုင်ပါပြီ။")
+        await bot.reply_to(message, "✅ Session URL သိမ်းဆည်းပြီးပါပြီ။\n/brute ဖြင့် စတင်ပါ။")
     else:
-        await bot.reply_to(message, "❌ Session URL မှားယွင်းနေပါသည်။")
+        await bot.reply_to(message, "Session URL မှားယွင်းနေပါသည်။")
 
 @bot.message_handler(commands=['brute'])
 async def brute(message):
     args = message.text.split()
     if len(args) < 2:
         await bot.reply_to(message,
-            "💡 အသုံးပြုနည်း:\n"
-            "`/brute <mode> [target] [plan]`\n\n"
+            "အသုံးပြုနည်း:\n"
+            "/brute <mode> [target] [plan]\n\n"
             "ဥပမာ:\n"
-            "`/brute 6 10 1d`        → ၁ရက် code ၁၀ ခု\n"
-            "`/brute 6 1d unlimit`  → ၁ရက် (သို့) unlimit code\n"
-            "`/brute 6 10 1d 1mo`   → ၁ရက် (သို့) ၁လ code ၁၀ ခု\n"
-            "`/brute 6`             → အစုံရှာ\n\n"
-            "Plan ကိုယ်ကြိုက်သလောက်ပေးနိုင် (30min, 2h, 1d, 1mo, unlimit ...)", parse_mode="Markdown"
+            "/brute 6 10 1d        → ၁ရက် code ၁၀ ခု\n"
+            "/brute 6 1d unlimit  → ၁ရက် (သို့) unlimit code\n"
+            "/brute 6 10 1d 1mo   → ၁ရက် (သို့) ၁လ code ၁၀ ခု\n"
+            "/brute 6             → အစုံရှာ\n\n"
+            "Plan ကိုယ်ကြိုက်သလောက်ပေးနိုင် (30min, 2h, 1d, 1mo, unlimit ...)"
         )
         return
 
@@ -924,21 +884,21 @@ async def brute(message):
 
     chat_id = message.chat.id
     if not approve.get(chat_id, False):
-        await bot.reply_to(message, "Key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
+        await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
     if chat_id not in user_data or 'session_url' not in user_data[chat_id]:
-        await bot.reply_to(message, "Setup အရင်လုပ်ပေးပါ။")
+        await bot.reply_to(message, "/setup ဖြင့် Session URL ထည့်ပါ။")
         return
 
     if chat_id in last_scan_params:
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("▶️ Resume", callback_data="resume_scan"),
-                   InlineKeyboardButton("🚀 New Scan", callback_data="new_scan"))
+        markup.add(InlineKeyboardButton("Resume", callback_data="resume_scan"),
+                   InlineKeyboardButton("New Scan", callback_data="new_scan"))
         pending_brute[chat_id] = {"mode": mode, "target": target, "plan_filters": plan_filters}
         prev = last_scan_params[chat_id]
         prev_plans = ' / '.join(prev.get('plan_filters') or []) or 'any'
         await bot.reply_to(message,
-            f"⚠️ ယခင် scan ရပ်ထားသည် (mode: {prev['mode']}, target: {prev['target']}, plan: {prev_plans}).\nပြန်စမလား၊ အသစ်စမလား?",
+            f"ယခင် scan ရပ်ထားသည် (mode: {prev['mode']}, target: {prev['target']}, plan: {prev_plans}).\nပြန်စမလား၊ အသစ်စမလား?",
             reply_markup=markup)
         return
 
@@ -947,7 +907,7 @@ async def brute(message):
 async def start_brute_scan(chat_id, mode, target, original_message, plan_filters=None):
     plan_filters = plan_filters or []
     filter_note = f" | Filter: {' / '.join(plan_filters)}" if plan_filters else ""
-    progress_msg = await bot.send_message(chat_id, f"⚙️ Preparing...{filter_note}")
+    progress_msg = await bot.send_message(chat_id, f"Preparing...{filter_note}")
     scan_id = str(uuid.uuid4())
     task = asyncio.create_task(
         run_bruteforce(
@@ -972,7 +932,7 @@ async def stop_scan(message):
         data["stop"] = True
         data["task"].cancel()
         scan_tasks.pop(chat_id, None)
-        await bot.reply_to(message, "🛑 Scan ရပ်ထားပါသည်။ ပြန်စလိုပါက Menu (သို့) /resume ကိုသုံးပါ။")
+        await bot.reply_to(message, "Scan ရပ်ထားပါသည်။ ပြန်စလိုပါက /resume ကိုသုံးပါ။")
     else:
         await bot.reply_to(message, "ရပ်ရန် scan မရှိပါ။")
 
@@ -984,7 +944,7 @@ async def resume_scan(message):
         return
     params = last_scan_params.pop(chat_id)
     await start_brute_scan(chat_id, params['mode'], params['target'], message, plan_filters=params.get('plan_filters', []))
-    await bot.reply_to(message, "▶️ ယခင် scan ပြန်စပါပြီ။")
+    await bot.reply_to(message, "ယခင် scan ပြန်စပါပြီ။")
 
 @bot.callback_query_handler(func=lambda call: call.data in ["resume_scan", "new_scan"])
 async def handle_resume_callback(call):
@@ -995,13 +955,13 @@ async def handle_resume_callback(call):
             await bot.edit_message_text("Resume လုပ်ရန် scan မရှိပါ။", chat_id=chat_id, message_id=call.message.message_id)
             return
         params = last_scan_params.pop(chat_id)
-        await bot.edit_message_text("▶️ ယခင် scan ပြန်စပါပြီ။", chat_id=chat_id, message_id=call.message.message_id)
+        await bot.edit_message_text("ယခင် scan ပြန်စပါပြီ။", chat_id=chat_id, message_id=call.message.message_id)
         await start_brute_scan(chat_id, params['mode'], params['target'], call.message, plan_filters=params.get('plan_filters', []))
     else:  # new_scan
         if chat_id in pending_brute:
             params = pending_brute.pop(chat_id)
             last_scan_params.pop(chat_id, None)
-            await bot.edit_message_text("🚀 Scan အသစ်စတင်ပါပြီ။", chat_id=chat_id, message_id=call.message.message_id)
+            await bot.edit_message_text("Scan အသစ်စတင်ပါပြီ။", chat_id=chat_id, message_id=call.message.message_id)
             await start_brute_scan(chat_id, params['mode'], params['target'], call.message, plan_filters=params.get('plan_filters', []))
         else:
             await bot.edit_message_text("Command ထပ်မံပေးပို့ပါ။", chat_id=chat_id, message_id=call.message.message_id)
@@ -1012,7 +972,7 @@ async def saved_codes(message):
     success = success_texts.get(chat_id, [])
     limited = limited_texts.get(chat_id, [])
     if not success and not limited:
-        await bot.reply_to(message, "📂 ရှာတွေ့ထားသော code မရှိသေးပါ။")
+        await bot.reply_to(message, "ရှာတွေ့ထားသော code မရှိသေးပါ။")
         return
 
     # Build lines — use cached plan (no live API call needed)
@@ -1037,24 +997,24 @@ async def toggle_notify(message):
     chat_id = message.chat.id
     current = notify_setting.get(chat_id, False)
     notify_setting[chat_id] = not current
-    state = "🟢 ON" if notify_setting[chat_id] else "🔴 OFF"
+    state = "ON" if notify_setting[chat_id] else "OFF"
     save_state()
-    await bot.reply_to(message, f"🔔 Notification: **{state}**", parse_mode="Markdown")
+    await bot.reply_to(message, f"Notify: {state}")
 
 @bot.message_handler(commands=['recheck'])
 async def recheck(message):
     chat_id = message.chat.id
     if not approve.get(chat_id, False):
-        await bot.reply_to(message, "Key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
+        await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
     if chat_id not in user_data or 'session_url' not in user_data[chat_id]:
-        await bot.reply_to(message, "Setup အရင်လုပ်ပေးပါ။")
+        await bot.reply_to(message, "/setup ဖြင့် Session URL ထည့်ပါ။")
         return
     success = success_texts.get(chat_id, [])
     if not success:
         await bot.reply_to(message, "Recheck လုပ်ရန် success code မရှိပါ။")
         return
-    await bot.reply_to(message, "🔄 Success codes များကို ပြန်လည်စစ်ဆေးနေပါသည်...")
+    await bot.reply_to(message, "Success codes များကို ပြန်လည်စစ်ဆေးနေပါသည်...")
     new_success = []
     for item in success:
         code = item["code"]
@@ -1067,7 +1027,7 @@ async def recheck(message):
     if new_success:
         success_texts[chat_id] = new_success
         # Optionally show codes after recheck (no balance fetch here to keep it fast)
-        await bot.reply_to(message, f"✅ Rechecked Codes:\n" + "\n".join([f"`{i['code']}`" for i in new_success]), parse_mode="Markdown")
+        await bot.reply_to(message, f"✅ Rechecked Codes:\n" + "\n".join([i["code"] for i in new_success]))
     else:
         success_texts[chat_id] = []
         await bot.reply_to(message, "Recheck ပြီးပါပြီ၊ success code တစ်ခုမျှမကျန်ပါ။")
@@ -1075,7 +1035,7 @@ async def recheck(message):
 @bot.message_handler(commands=['status'])
 async def status(message):
     if str(message.chat.id) != ADMIN_ID:
-        await bot.reply_to(message, "🚫 No Permission")
+        await bot.reply_to(message, "No Permission")
         return
     active_scans = sum(1 for data in scan_tasks.values() if not data["task"].done())
     approved_users = sum(1 for v in approve.values() if v)
@@ -1084,18 +1044,17 @@ async def status(message):
     minutes, seconds = divmod(remainder, 60)
     await bot.reply_to(
         message,
-        f"📊 **Bot Status**\n\n"
-        f"⏱ Uptime: `{hours}h {minutes}m {seconds}s`\n"
-        f"🔍 Active Scans: `{active_scans}`\n"
-        f"✅ Approved Users: `{approved_users}`\n"
-        f"👥 Sessions Loaded: `{len(user_data)}`",
-        parse_mode="Markdown"
+        f"📊 Bot Status\n\n"
+        f"⏱ Uptime: {hours}h {minutes}m {seconds}s\n"
+        f"🔍 Active Scans: {active_scans}\n"
+        f"✅ Approved Users: {approved_users}\n"
+        f"👥 Sessions Loaded: {len(user_data)}"
     )
 
 @bot.message_handler(commands=['testbalance'])
 async def testbalance(message):
     if str(message.chat.id) != ADMIN_ID:
-        await bot.reply_to(message, "🚫 No Permission")
+        await bot.reply_to(message, "No Permission")
         return
     chat_id = message.chat.id
 
@@ -1138,5 +1097,127 @@ async def testbalance(message):
                     f"🎯 Code: `{code}`\n"
                     f"🔑 Session ID: `{sid}`\n"
                     f"📡 HTTP Status: `{resp.status}`\n\n"
-                    f"📦 Raw Response:\n
-http://googleusercontent.com/immersive_entry_chip/0
+                    f"📦 Raw Response:\n```\n{raw[:2000]}\n```"
+                )
+                await bot.send_message(chat_id, result, parse_mode="Markdown")
+        except Exception as e:
+            await bot.send_message(chat_id, f"❌ Code `{code}` error: {e}", parse_mode="Markdown")
+
+@bot.message_handler(commands=['genkey'])
+async def genkey(message):
+    if str(message.chat.id) != ADMIN_ID:
+        await bot.reply_to(message, "No Permission")
+        return
+    args = message.text.split()
+    if len(args) < 3:
+        await bot.reply_to(message, "Usage:\n/genkey 1h30m 123456789\n/genkey unlimited 123456789")
+        return
+    plan = args[1]
+    user_id = args[2]
+    expiry = generate_expiry(plan)
+    if not expiry:
+        await bot.reply_to(message, "Duration ပုံစံမမှန်ပါ။ ဥပမာ: 30m, 1h, 2d, 1h30m, unlimited")
+        return
+    auth_list, sha = await get_file_content("auth_list.json")
+    auth_list[user_id] = {"expires_at": expiry, "plan": plan}
+    await update_file_content("auth_list.json", auth_list, sha, f"Add key for {user_id}")
+    await bot.reply_to(message, f"✅ Key Generated\n\nUSER ID : {user_id}\nPLAN : {plan}\nEXPIRES : {expiry}")
+
+@bot.message_handler(commands=['delkey'])
+async def delkey(message):
+    if str(message.chat.id) != ADMIN_ID:
+        await bot.reply_to(message, "No Permission")
+        return
+    args = message.text.split()
+    if len(args) < 2:
+        await bot.reply_to(message, "Usage:\n/delkey 123456789")
+        return
+    user_id = args[1]
+    auth_list, sha = await get_file_content("auth_list.json")
+    if user_id not in auth_list:
+        await bot.reply_to(message, f"User ID {user_id} မတွေ့ပါ။")
+        return
+    del auth_list[user_id]
+    await update_file_content("auth_list.json", auth_list, sha, f"Delete key for {user_id}")
+    approve.pop(int(user_id), None)
+    user_data.pop(int(user_id), None)
+    await bot.reply_to(message, f"✅ Key Deleted\n\nUSER ID : {user_id}")
+
+@bot.message_handler(commands=['listkeys'])
+async def listkeys(message):
+    if str(message.chat.id) != ADMIN_ID:
+        await bot.reply_to(message, "No Permission")
+        return
+    try:
+        auth_list, _ = await get_file_content("auth_list.json")
+        if not auth_list:
+            await bot.reply_to(message, "Registered key မရှိသေးပါ။")
+            return
+        lines = []
+        for uid, data in auth_list.items():
+            if isinstance(data, dict):
+                expires = data.get("expires_at", "unknown")
+                plan = data.get("plan", "unknown")
+                if expires == "9999-12-31T23:59:59Z":
+                    expires_str = "Unlimited"
+                else:
+                    try:
+                        exp_dt = datetime.fromisoformat(expires.replace("Z", "+00:00"))
+                        now = datetime.now(timezone.utc)
+                        if exp_dt < now:
+                            expires_str = "Expired"
+                        else:
+                            diff = exp_dt - now
+                            days = diff.days
+                            hours, rem = divmod(diff.seconds, 3600)
+                            minutes = rem // 60
+                            expires_str = f"{days}d {hours}h {minutes}m left"
+                    except:
+                        expires_str = expires
+            else:
+                plan = "old"
+                expires_str = str(data)
+            lines.append(f"👤 {uid}\n   Plan: {plan}\n   Expires: {expires_str}")
+        text = f"📋 Registered Keys ({len(auth_list)})\n\n" + "\n\n".join(lines)
+        if len(text) > 4096:
+            for i in range(0, len(text), 4096):
+                await bot.send_message(message.chat.id, text[i:i+4096])
+        else:
+            await bot.reply_to(message, text)
+    except Exception as e:
+        print(f"Error at listkeys {e}")
+
+# ── Polling and main ──────────────────────────────────────────────────────
+async def start_polling():
+    backoff = 5
+    while True:
+        try:
+            await bot.infinity_polling(timeout=20, request_timeout=20)
+            return
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            print(f"Polling error: {e}. Reconnecting in {backoff}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, 60)
+        except Exception as e:
+            print(f"Unexpected polling error: {e}. Reconnecting in {backoff}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, 60)
+
+async def main():
+    global session, _connector
+    timeout = aiohttp.ClientTimeout(total=30)
+    _connector = aiohttp.TCPConnector(limit=1000, ttl_dns_cache=300, ssl=True)
+    session = aiohttp.ClientSession(timeout=timeout, connector=_connector, connector_owner=False)
+    try:
+        asyncio.create_task(web_server())
+        asyncio.create_task(github_update_scheduler())
+        load_state()
+        await load_saved_results()
+        await start_polling()
+    finally:
+        await session.close()
+        await _connector.close()
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
