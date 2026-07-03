@@ -804,7 +804,7 @@ async def handle_setup(message):
         await bot.reply_to(message, "အသုံးပြုနည်း:\n/setup your_session_url")
         return
     url = args[1]
-    if not approve.get(message.chat.id, False):
+    if str(message.chat.id) != str(ADMIN_ID) and not approve.get(message.chat.id, False):
         await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
     await bot.reply_to(message, "Session URL စစ်ဆေးနေပါသည်...")
