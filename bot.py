@@ -808,16 +808,24 @@ async def help_cmd(message):
 
 @bot.message_handler(commands=['key'])
 async def handle_key(message):
-    key = str(message.chat.id)
+    chat_id = message.chat.id
+    if str(chat_id) == str(ADMIN_ID):
+        approve[chat_id] = True
+        user_data.setdefault(chat_id, {})
+        save_state()
+        await bot.reply_to(message, "👑 Admin အဖြစ် အသိအမှတ်ပြုပြီးပါပြီ။ /setup ဖြင့် စတင်နိုင်ပါသည်။")
+        return
+
+    key = str(chat_id)
     auth_list, _ = await get_file_content("auth_list.json")
     if key in auth_list:
         if check_key_expiration(auth_list[key]):
-            approve[message.chat.id] = True
-            user_data.setdefault(message.chat.id, {})
+            approve[chat_id] = True
+            user_data.setdefault(chat_id, {})
             save_state()
             await bot.reply_to(message, "✅ Key မှန်ကန်ပါသည်။ /setup ဖြင့် Session URL ထည့်ပါ။")
         else:
-            approve[message.chat.id] = False
+            approve[chat_id] = False
             save_state()
             await bot.reply_to(message, "❌ Key Expired ဖြစ်နေပါသည်။")
     else:
@@ -909,7 +917,7 @@ async def brute(message):
             return
 
     chat_id = message.chat.id
-    if not approve.get(chat_id, False):
+    if str(chat_id) != str(ADMIN_ID) and not approve.get(chat_id, False):
         await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
     if chat_id not in user_data or 'session_url' not in user_data[chat_id]:
@@ -1030,7 +1038,7 @@ async def toggle_notify(message):
 @bot.message_handler(commands=['recheck'])
 async def recheck(message):
     chat_id = message.chat.id
-    if not approve.get(chat_id, False):
+    if str(chat_id) != str(ADMIN_ID) and not approve.get(chat_id, False):
         await bot.reply_to(message, "/key ဖြင့် အတည်ပြုပြီးမှ အသုံးပြုပါ။")
         return
     if chat_id not in user_data or 'session_url' not in user_data[chat_id]:
