@@ -317,6 +317,8 @@ def _parse_minutes(val):
     total_mins = int(val)
     if total_mins <= 0:
         return "0m"
+    if total_mins > 500000:  # Very large value usually means unlimited
+        return "Unlimited ♾️"
     if total_mins < 60:
         return f"{total_mins}m"
     hours = total_mins // 60
