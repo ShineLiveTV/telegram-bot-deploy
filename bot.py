@@ -753,7 +753,31 @@ async def load_saved_results():
 # ── Bot commands ───────────────────────────────────────────────────────────
 @bot.message_handler(commands=['start'])
 async def start(message):
-    await bot.reply_to(message, "Bot စတင်ပါပြီ။ /help ဖြင့် အသုံးပြုနည်းကြည့်ပါ။")
+    markup = InlineKeyboardMarkup()
+    markup.row(InlineKeyboardButton("Setup Bot ⚙️", callback_data="setup_btn"),
+               InlineKeyboardButton("Check Status 📊", callback_data="status_btn"))
+    markup.row(InlineKeyboardButton("My Keys 🔑", callback_data="key_btn"),
+               InlineKeyboardButton("Help ❓", callback_data="help_btn"))
+    welcome_text = "👋 Welcome to Telegram Voucher Bot!\n\nအောက်က ခလုတ်တွေကို အသုံးပြုပြီး Bot ကို ထိန်းချုပ်နိုင်ပါတယ်။"
+    await bot.reply_to(message, welcome_text, reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: call.data.endswith('_btn'))
+async def callback_query(call):
+    chat_id = call.message.chat.id
+    if call.data == "setup_btn":
+        await bot.answer_callback_query(call.id)
+        await bot.send_message(chat_id, "Bot ကို setup လုပ်ဖို့ `/setup <url>` လို့ ရိုက်ပေးပါ။", parse_mode="Markdown")
+    elif call.data == "status_btn":
+        await bot.answer_callback_query(call.id)
+        # Call status logic or just send a quick status
+        status_text = "🤖 Bot Status: Online\n⚡ Concurrency: 200\n🕒 Uptime: Running"
+        await bot.send_message(chat_id, status_text)
+    elif call.data == "key_btn":
+        await bot.answer_callback_query(call.id)
+        await bot.send_message(chat_id, "သင့်ရဲ့ Key ကို စစ်ဆေးဖို့ `/key` လို့ ရိုက်ပေးပါ။", parse_mode="Markdown")
+    elif call.data == "help_btn":
+        await bot.answer_callback_query(call.id)
+        await help_cmd(call.message)
 
 @bot.message_handler(commands=['help'])
 async def help_cmd(message):
