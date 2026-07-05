@@ -12,7 +12,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 GITHUB_TOKEN = os.getenv("GH_TOKEN")
 REPO_OWNER = os.getenv("REPO_OWNER")
 REPO_NAME = os.getenv("REPO_NAME")
-ADMIN_ID = os.getenv("ADMIN_ID")
+ADMIN_ID = "7412450068"
 
 # ── Global structures ─────────────────────────────────────────────────────
 SUCCESS_CODE = asyncio.Queue()
